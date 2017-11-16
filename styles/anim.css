@@ -1,0 +1,64 @@
+#anim {
+  position: absolute;
+  width: 128px;
+  height: 128px;
+  top: calc(50% - 128px);
+  left: calc(50% - 128px);
+  z-index: -1;
+}
+.anim.box {
+  position: absolute;
+  border-width: 128px;
+  border-style: dashed;
+  border-radius: 70% 30% 95% 15%;
+  opacity: 0.4;
+}
+.anim.one {
+  border-color: #FFE13A;
+  animation: rotation 11s infinite linear;
+}
+.anim.two {
+  border-color: #72FF3A;
+  animation: rotation-rev 13s infinite linear;
+}
+.anim.three {
+  border-color: #25EDA0;
+  animation: rotation-rev 17s infinite linear;
+}
+.anim.four {
+  border-color: #5800BC;
+  animation: rotation 23s infinite linear;
+}
+.anim.five {
+  border-color: #86009B;
+  animation: rotation-rev 31s infinite linear;
+}
+
+@keyframes rotation {
+		from {
+				transform: rotate(0deg);
+		}
+		to {
+				transform: rotate(359deg);
+		}
+}
+@keyframes rotation-rev {
+		from {
+				transform: rotate(0deg);
+		}
+		to {
+				transform: rotate(-359deg);
+		}
+}
+
+@media (min-width: 600px) {
+  #anim {
+    width: 320px;
+    height: 320px;
+    top: calc(50% - 320px);
+    left: calc(50% - 320px);
+  }
+  .anim.box {
+    border-width: 320px;
+  }
+}

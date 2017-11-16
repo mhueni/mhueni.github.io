@@ -1,0 +1,86 @@
+/* Fonts */
+
+@import url('https://fonts.googleapis.com/css?family=Roboto:400,700');
+@import url('particles-grid.css');
+
+/* https://sites.google.com/powercoders.org/resources/week-04/fri-oct-20 */
+@import url('menu.css');
+
+@import url('anim.css');
+
+/* Styles */
+
+html {
+  font-size: 100%;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  padding: 0;
+  margin: 0;
+  background: #000;
+  color: #fff;
+}
+
+h1 {
+  padding: 1em 0;
+  font-weight: 700;
+  font-size: 3rem;
+}
+
+a,a:visited {
+  color: #FFF;
+}
+
+nav {
+  background-color: #2800d8;
+}
+
+nav .container {
+  padding: 0;
+}
+
+nav ul {
+  color: #63A375;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+nav li {
+  display: block;
+}
+
+nav a {
+  display: block;
+  font-weight: 700;
+  color: #fff;
+  padding: 1rem 2rem;
+  font-size: 1.5em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+nav a:hover, nav a.selected:hover {
+  color: #FFF;
+}
+
+nav a.selected {
+  color: #FFF;
+  background-color: #8A2BE2;
+}
+
+img.responsive {
+  max-width: 100%;
+  height: auto;
+}
+
+.colborder {
+  border: 1px solid #000;
+}
+
+@media (min-width: 600px) {
+  nav li {
+    display: inline-block;
+  }
+}

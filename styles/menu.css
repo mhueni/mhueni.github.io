@@ -1,0 +1,38 @@
+#menu-box {
+  display: none;
+}
+#menu-button {
+  display: block;
+  position: absolute;
+  right: 0;
+  width: 32px;
+  height: 32px;
+  margin: 14px;
+}
+#menu-button span,
+#menu-button span:before,
+#menu-button span:after {
+  background-color: #FFF;
+  position: absolute;
+  display: block;
+  width: 100%;
+  border-radius: 3px;
+  height: 6px;
+}
+#menu-button span:before {
+  content: '';
+  margin-top: 12px;
+}
+#menu-button span:after {
+  content: '';
+  margin-top: 24px;
+}
+
+@media (min-width: 600px) {
+  #menu-button {
+    display: none;
+  }
+  #menu-box {
+    display: block;
+  }
+}
