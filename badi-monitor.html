@@ -75,7 +75,6 @@ body {
   inset: 0;
   width: var(--fill);
   background: rgba(0,0,0,0.12);
-  border-radius: inherit;
   pointer-events: none;
 }
 
@@ -102,35 +101,82 @@ body {
 }
 
 .visitor-count {
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   font-weight: 700;
   margin-left: auto;
   white-space: nowrap;
 }
+.visitor-count.muted { color: #999; }
 
-.pool-card-head h2 {
+.pool-name-group {
+  min-width: 0;
+  flex: 1;
+}
+.pool-name-group h2 {
   font-size: 1.05rem;
   font-weight: 600;
   margin: 0;
-  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.open-status {
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: block;
+  margin-top: 1px;
+}
+.open-status.open   { color: #1e8c3e; }
+.open-status.maybe  { color: #b87a0a; }
+.open-status.closed { color: #6b7a7a; }
 
 .star-btn {
   background: none;
   border: none;
-  font-size: 1.4rem;
   cursor: pointer;
-  padding: 2px;
+  padding: 0;
   line-height: 1;
+  display: flex;
+  align-items: center;
   transition: transform 0.15s;
-  color: #bdc3c7;
+  flex-shrink: 0;
+}
+
+.star-btn svg {
+  width: 28px;
+  height: 28px;
+  display: block;
 }
 
 .star-btn:hover { transform: scale(1.2); }
-.star-btn.fav { color: #f1c40f; }
+
+.pool-card { cursor: pointer; }
+
+
+
+.pool-details {
+  display: none;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0,0,0,0.1);
+  font-size: 0.82rem;
+}
+.pool-card.expanded .pool-details { display: block; }
+
+.pool-details table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.pool-details th,
+.pool-details td {
+  padding: 3px 6px;
+  text-align: left;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.pool-details th {
+  font-weight: 600;
+  font-size: 0.78rem;
+}
 
 .empty {
   grid-column: 1 / -1;
@@ -170,6 +216,98 @@ const WHITELIST = new Set([
   'seb6946', 'seb6947', 'seb6948'
 ]);
 
+const POOL_HOURS = {
+  "fb006": { periods: [
+    { start: {d:9,m:4}, end: {d:29,m:4}, label: "9.–29. Mai", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:30,m:4}, end: {d:16,m:7}, label: "30. Mai–16. August", everyWeather: "9–14", niceWeather: "14–21" },
+    { start: {d:17,m:7}, end: {d:6,m:8}, label: "17. August–6. September", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:7,m:8}, end: {d:20,m:8}, label: "7.–20. September", everyWeather: "9–14", niceWeather: "14–19" },
+  ]},
+  "fb008": { periods: [
+    { start: {d:9,m:4}, end: {d:29,m:4}, label: "9.–29. Mai", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:30,m:4}, end: {d:16,m:7}, label: "30. Mai–16. August", everyWeather: "9–14", niceWeather: "14–21" },
+    { start: {d:17,m:7}, end: {d:6,m:8}, label: "17. August–6. September", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:7,m:8}, end: {d:27,m:8}, label: "7.–27. September", everyWeather: "9–14", niceWeather: "14–19" },
+  ]},
+  "fb012": { periods: [
+    { start: {d:9,m:4}, end: {d:29,m:4}, label: "9.–29. Mai", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:30,m:4}, end: {d:16,m:7}, label: "30. Mai–16. August", everyWeather: "9–14", niceWeather: "14–21" },
+    { start: {d:17,m:7}, end: {d:6,m:8}, label: "17. August–6. September", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:7,m:8}, end: {d:20,m:8}, label: "7.–20. September", everyWeather: "9–14", niceWeather: "14–19" },
+  ]},
+  "fb018": { periods: [
+    { start: {d:9,m:4}, end: {d:29,m:4}, label: "9.–29. Mai", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:30,m:4}, end: {d:16,m:7}, label: "30. Mai–16. August", everyWeather: "9–14", niceWeather: "14–21" },
+    { start: {d:17,m:7}, end: {d:6,m:8}, label: "17. August–6. September", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:7,m:8}, end: {d:20,m:8}, label: "7.–20. September", everyWeather: "9–14", niceWeather: "14–19" },
+  ]},
+  "LETZI-1": { periods: [
+    { start: {d:1,m:4}, end: {d:8,m:4}, label: "1.–8. Mai", hours: "7–19" },
+    { start: {d:9,m:4}, end: {d:29,m:4}, label: "9.–29. Mai", hours: "7–20" },
+    { start: {d:30,m:4}, end: {d:16,m:7}, label: "30. Mai–16. August", hours: "7–21" },
+    { start: {d:17,m:7}, end: {d:6,m:8}, label: "17. August–6. September", hours: "7–20" },
+    { start: {d:7,m:8}, end: {d:27,m:8}, label: "7.–27. September", hours: "7–19" },
+  ]},
+  "SSD-11": { periods: [
+    { start: {d:11,m:3}, end: {d:30,m:3}, label: "11.–30. April", hours: "9–19" },
+    { start: {d:1,m:4}, end: {d:8,m:4}, label: "1.–8. Mai", hours: "7–19" },
+    { start: {d:9,m:4}, end: {d:29,m:4}, label: "9.–29. Mai", hours: "7–20" },
+    { start: {d:30,m:4}, end: {d:16,m:7}, label: "30. Mai–16. August", hours: "7–21" },
+    { start: {d:17,m:7}, end: {d:6,m:8}, label: "17. August–6. September", hours: "7–20" },
+    { start: {d:7,m:8}, end: {d:27,m:8}, label: "7.–27. September", hours: "7–19" },
+    { start: {d:28,m:8}, end: {d:25,m:9}, label: "28. September–25. Oktober", hours: "9–18" },
+  ]},
+  "flb6939": { periods: [
+    { start: {d:9,m:4}, end: {d:29,m:4}, label: "9.–29. Mai", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:30,m:4}, end: {d:16,m:7}, label: "30. Mai–16. August", everyWeather: "9–14", niceWeather: "14–21" },
+    { start: {d:17,m:7}, end: {d:6,m:8}, label: "17. August–6. September", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:7,m:8}, end: {d:20,m:8}, label: "7.–20. September", everyWeather: "9–14", niceWeather: "14–19" },
+  ]},
+  "flb6940": { periods: [
+    { start: {d:9,m:4}, end: {d:29,m:4}, label: "9.–29. Mai", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:30,m:4}, end: {d:16,m:7}, label: "30. Mai–16. August", everyWeather: "9–14", niceWeather: "14–21" },
+    { start: {d:17,m:7}, end: {d:6,m:8}, label: "17. August–6. September", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:7,m:8}, end: {d:20,m:8}, label: "7.–20. September", everyWeather: "9–14", niceWeather: "14–19" },
+  ]},
+  "flb8803": { periods: [
+    { start: {d:9,m:4}, end: {d:29,m:4}, label: "9.–29. Mai", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:30,m:4}, end: {d:16,m:7}, label: "30. Mai–16. August", everyWeather: "9–14", niceWeather: "14–21" },
+    { start: {d:17,m:7}, end: {d:6,m:8}, label: "17. August–6. September", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:7,m:8}, end: {d:20,m:8}, label: "7.–20. September", everyWeather: "9–14", niceWeather: "14–19" },
+  ]},
+  "flb6941": { periods: [
+    { start: {d:9,m:4}, end: {d:6,m:8}, label: "9. Mai–6. September", everyWeather: "7–14", niceWeather: "14–19.30" },
+    { start: {d:7,m:8}, end: {d:20,m:8}, label: "7.–20. September", everyWeather: "7–14", niceWeather: "14–19" },
+  ]},
+  "SSD-10": { periods: [
+    { start: {d:11,m:3}, end: {d:30,m:3}, label: "11.–30. April", hours: "9–19" },
+    { start: {d:1,m:4}, end: {d:8,m:4}, label: "1.–8. Mai", hours: "7–19" },
+    { start: {d:9,m:4}, end: {d:29,m:4}, label: "9.–29. Mai", hours: "7–20" },
+    { start: {d:30,m:4}, end: {d:16,m:7}, label: "30. Mai–16. August", hours: "7–21" },
+    { start: {d:17,m:7}, end: {d:6,m:8}, label: "17. August–6. September", hours: "7–20" },
+    { start: {d:7,m:8}, end: {d:27,m:8}, label: "7.–27. September", hours: "7–19" },
+    { start: {d:28,m:8}, end: {d:25,m:9}, label: "28. September–25. Oktober", hours: "9–18" },
+  ]},
+  "seb6946": { periods: [
+    { start: {d:9,m:4}, end: {d:29,m:4}, label: "9.–29. Mai", everyWeather: "7–14", niceWeather: "14–20" },
+    { start: {d:30,m:4}, end: {d:16,m:7}, label: "30. Mai–16. August", everyWeather: "7–14", niceWeather: "14–21" },
+    { start: {d:17,m:7}, end: {d:6,m:8}, label: "17. August–6. September", everyWeather: "7–14", niceWeather: "14–20" },
+    { start: {d:7,m:8}, end: {d:27,m:8}, label: "7.–27. September", everyWeather: "7–14", niceWeather: "14–19" },
+  ]},
+  "seb6947": { periods: [
+    { start: {d:9,m:4}, end: {d:29,m:4}, label: "9.–29. Mai", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:30,m:4}, end: {d:16,m:7}, label: "30. Mai–16. August", everyWeather: "9–14", niceWeather: "14–21" },
+    { start: {d:17,m:7}, end: {d:6,m:8}, label: "17. August–6. September", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:7,m:8}, end: {d:27,m:8}, label: "7.–27. September", everyWeather: "9–14", niceWeather: "14–19" },
+  ]},
+  "seb6948": { periods: [
+    { start: {d:9,m:4}, end: {d:29,m:4}, label: "9.–29. Mai", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:30,m:4}, end: {d:16,m:7}, label: "30. Mai–16. August", everyWeather: "9–14", niceWeather: "14–21" },
+    { start: {d:17,m:7}, end: {d:6,m:8}, label: "17. August–6. September", everyWeather: "9–14", niceWeather: "14–20" },
+    { start: {d:7,m:8}, end: {d:20,m:8}, label: "7.–20. September", everyWeather: "9–14", niceWeather: "14–19" },
+  ]},
+};
+
 const WS_URL = 'wss://badi-public.crowdmonitor.ch:9591/api';
 
 let ws = null;
@@ -199,6 +337,65 @@ function isFav(uid) {
   return getFavorites().includes(uid);
 }
 
+function getCESTNow() {
+  const s = new Date().toLocaleString('de-CH', { timeZone: 'Europe/Zurich', hour12: false });
+  const [datePart, timePart] = s.split(', ');
+  const [d, m] = datePart.split('.').map(Number);
+  const [h, min] = timePart.split(':').map(Number);
+  return { day: d, month: m - 1, hour: h + min / 60 };
+}
+
+function parseHours(s) {
+  const [h1, h2] = s.split('–');
+  const [sh, sm] = h1.split('.').map(Number);
+  const [eh, em] = h2.split('.').map(Number);
+  return { start: sh + (sm || 0) / 60, end: eh + (em || 0) / 60 };
+}
+
+function isOpen(uid) {
+  const info = POOL_HOURS[uid];
+  if (!info) return { status: 'unknown', label: 'Unbekannt' };
+  const { day, month, hour } = getCESTNow();
+  let period = null;
+  for (const p of info.periods) {
+    if (new Date(2026, month, day) >= new Date(2026, p.start.m, p.start.d) &&
+        new Date(2026, month, day) <= new Date(2026, p.end.m, p.end.d)) {
+      period = p; break;
+    }
+  }
+  if (!period) return { status: 'closed', label: 'Geschlossen' };
+  if (period.hours) {
+    const r = parseHours(period.hours);
+    if (hour >= r.start && hour < r.end) return { status: 'open', label: 'Offen' };
+    return { status: 'closed', label: 'Geschlossen' };
+  }
+  const every = parseHours(period.everyWeather);
+  if (hour >= every.start && hour < every.end) return { status: 'open', label: 'Offen' };
+  const nice = parseHours(period.niceWeather);
+  if (hour >= nice.start && hour < nice.end) return { status: 'maybe', label: 'Offen (bei schönem Wetter)' };
+  return { status: 'closed', label: 'Geschlossen' };
+}
+
+function renderOpeningHours(uid) {
+  const info = POOL_HOURS[uid];
+  if (!info) return '';
+  const hasWeather = !!info.periods[0].everyWeather;
+  let html = '<table>';
+  if (hasWeather) {
+    html += '<tr><th>Zeitraum</th><th>Jedes Wetter</th><th>Schönwetter</th></tr>';
+    for (const p of info.periods) {
+      html += `<tr><td>${p.label}</td><td>${p.everyWeather} Uhr</td><td>${p.niceWeather} Uhr</td></tr>`;
+    }
+  } else {
+    html += '<tr><th>Zeitraum</th><th>Öffnungszeiten</th></tr>';
+    for (const p of info.periods) {
+      html += `<tr><td>${p.label}</td><td>${p.hours} Uhr</td></tr>`;
+    }
+  }
+  html += '</table>';
+  return html;
+}
+
 function sortPools(pools) {
   const favs = getFavorites();
   return [...pools].sort((a, b) => {
@@ -218,30 +415,52 @@ function renderPools() {
     return;
   }
 
+  const expandedUids = new Set();
+  document.querySelectorAll('.pool-card.expanded').forEach(card => {
+    expandedUids.add(card.dataset.uid);
+  });
+
   let html = '';
   for (const p of sorted) {
     const fav = isFav(p.uid);
     const total = Math.max(p.maxspace, 1);
     const fill = Math.max(parseInt(p.currentfill) || 0, 0);
     const pct = Math.min(100, Math.round((fill / total) * 100));
+    const { status, label } = isOpen(p.uid);
 
     let cardColor = 'green';
     if (pct > 80) cardColor = 'red';
     else if (pct >= 50) cardColor = 'orange';
 
     html += `
-      <div class="pool-card ${cardColor}${fav ? ' favorite' : ''}" data-uid="${p.uid}" style="--fill: ${pct}%">
+      <div class="pool-card ${cardColor}${fav ? ' favorite' : ''}${expandedUids.has(p.uid) ? ' expanded' : ''}" data-uid="${p.uid}" style="--fill: ${pct}%">
         <div class="pool-card-head">
-          <button class="star-btn${fav ? ' fav' : ''}" data-uid="${p.uid}" title="Favorit">${fav ? '&#9733;' : '&#9734;'}</button>
-          <h2>${escHtml(p.name)}</h2>
-          <span class="visitor-count">${fill}</span>
+          <button class="star-btn" data-uid="${p.uid}" title="Favorit">${fav
+            ? '<svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#000" stroke="#000" stroke-width="1"/></svg>'
+            : '<svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="none" stroke="#000" stroke-width="1"/></svg>'}</button>
+          <div class="pool-name-group">
+            <h2>${escHtml(p.name)}</h2>
+            <span class="open-status ${status}">${label}</span>
+          </div>
+          <span class="visitor-count${status === 'closed' ? ' muted' : ''}">${fill}</span>
         </div>
+        <div class="pool-details">${renderOpeningHours(p.uid)}</div>
       </div>`;
   }
   grid.innerHTML = html;
 
   document.querySelectorAll('.star-btn').forEach(btn => {
-    btn.addEventListener('click', () => toggleFavorite(btn.dataset.uid));
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFavorite(btn.dataset.uid);
+    });
+  });
+
+  document.querySelectorAll('.pool-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.star-btn')) return;
+      card.classList.toggle('expanded');
+    });
   });
 }
 
@@ -303,7 +522,16 @@ function scheduleReconnect() {
   }, backoff);
 }
 
-document.addEventListener('DOMContentLoaded', connect);
+document.addEventListener('DOMContentLoaded', () => {
+  connect();
+  setInterval(() => {
+    document.querySelectorAll('.pool-card').forEach(card => {
+      const { status, label } = isOpen(card.dataset.uid);
+      const el = card.querySelector('.open-status');
+      if (el) { el.className = 'open-status ' + status; el.textContent = label; }
+    });
+  }, 60000);
+});
 window.addEventListener('beforeunload', () => {
   if (reconnectTimer) clearTimeout(reconnectTimer);
   if (ws) try { ws.close(); } catch {}
