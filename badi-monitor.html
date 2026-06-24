@@ -335,7 +335,11 @@ function toggleFavorite(uid) {
   if (idx >= 0) { favs.splice(idx, 1); }
   else { favs.push(uid); }
   setFavorites(favs);
-  renderPools();
+  if (document.startViewTransition) {
+    document.startViewTransition(() => renderPools());
+  } else {
+    renderPools();
+  }
 }
 
 function isFav(uid) {
