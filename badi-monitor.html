@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wo go bade in Züri?</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: #f0f2f5;
+  color: #1a1a2e;
+  line-height: 1.5;
+}
+
+.wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 12px;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-badge {
+  font-size: 0.8rem;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.status-badge.connected    { background: #2ecc71; }
+.status-badge.reconnecting { background: #f39c12; }
+.status-badge.error        { background: #e74c3c; }
+.status-badge.disconnected  { background: #95a5a6; }
+
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.pool-card {
+  position: relative;
+  border-radius: 12px;
+  padding: 16px 20px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.pool-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: var(--fill);
+  background: rgba(0,0,0,0.12);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.pool-card > * {
+  position: relative;
+}
+
+.pool-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.pool-card.favorite {
+  outline: 2px solid #95a5a6;
+}
+
+.pool-card.green  { background: #d4edda; }
+.pool-card.orange { background: #ffe5b4; }
+.pool-card.red    { background: #f8d7da; }
+
+.pool-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.visitor-count {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.pool-card-head h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 2px;
+  line-height: 1;
+  transition: transform 0.15s;
+  color: #bdc3c7;
+}
+
+.star-btn:hover { transform: scale(1.2); }
+.star-btn.fav { color: #f1c40f; }
+
+.empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 48px 16px;
+  color: #8e8ea0;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .header h1 {
+    font-size: 1.25rem;
+  }
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+      <h2>🔥 Wo go bade in Z&uuml;ri?</h2>
+    <div class="header-right">
+      <span id="status" class="status-badge disconnected">Getrennt</span>
+    </div>
+  </div>
+  <div id="grid" class="grid"></div>
+</div>
+
+<script>
+const WHITELIST = new Set([
+  'SSD-10', 'SSD-11',
+  'flb6939', 'flb6940', 'flb8803', 'flb6941',
+  'fb006', 'fb008', 'fb012', 'fb018',
+  'LETZI-1',
+  'seb6946', 'seb6947', 'seb6948'
+]);
+
+const WS_URL = 'wss://badi-public.crowdmonitor.ch:9591/api';
+
+let ws = null;
+let reconnectTimer = null;
+let backoff = 1000;
+let currentPools = [];
+
+function getFavorites() {
+  try { return JSON.parse(localStorage.getItem('badi-favorites') || '[]'); }
+  catch { return []; }
+}
+
+function setFavorites(uids) {
+  localStorage.setItem('badi-favorites', JSON.stringify(uids));
+}
+
+function toggleFavorite(uid) {
+  const favs = getFavorites();
+  const idx = favs.indexOf(uid);
+  if (idx >= 0) { favs.splice(idx, 1); }
+  else { favs.push(uid); }
+  setFavorites(favs);
+  renderPools();
+}
+
+function isFav(uid) {
+  return getFavorites().includes(uid);
+}
+
+function sortPools(pools) {
+  const favs = getFavorites();
+  return [...pools].sort((a, b) => {
+    const aF = favs.includes(a.uid);
+    const bF = favs.includes(b.uid);
+    if (aF !== bF) return aF ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+function renderPools() {
+  const grid = document.getElementById('grid');
+  const sorted = sortPools(currentPools);
+
+  if (sorted.length === 0) {
+    grid.innerHTML = '<div class="empty">Keine Daten verf&uuml;gbar</div>';
+    return;
+  }
+
+  let html = '';
+  for (const p of sorted) {
+    const fav = isFav(p.uid);
+    const total = Math.max(p.maxspace, 1);
+    const fill = Math.max(parseInt(p.currentfill) || 0, 0);
+    const pct = Math.min(100, Math.round((fill / total) * 100));
+
+    let cardColor = 'green';
+    if (pct > 80) cardColor = 'red';
+    else if (pct >= 50) cardColor = 'orange';
+
+    html += `
+      <div class="pool-card ${cardColor}${fav ? ' favorite' : ''}" data-uid="${p.uid}" style="--fill: ${pct}%">
+        <div class="pool-card-head">
+          <button class="star-btn${fav ? ' fav' : ''}" data-uid="${p.uid}" title="Favorit">${fav ? '&#9733;' : '&#9734;'}</button>
+          <h2>${escHtml(p.name)}</h2>
+          <span class="visitor-count">${fill}</span>
+        </div>
+      </div>`;
+  }
+  grid.innerHTML = html;
+
+  document.querySelectorAll('.star-btn').forEach(btn => {
+    btn.addEventListener('click', () => toggleFavorite(btn.dataset.uid));
+  });
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function setStatus(text, cls) {
+  const el = document.getElementById('status');
+  el.textContent = text;
+  el.className = 'status-badge ' + cls;
+}
+
+
+function connect() {
+  if (ws) try { ws.close(); } catch {}
+
+  try {
+    ws = new WebSocket(WS_URL);
+  } catch (err) {
+    setStatus('Fehler', 'error');
+    scheduleReconnect();
+    return;
+  }
+
+  ws.onopen = () => {
+    setStatus('Verbunden', 'connected');
+    backoff = 1000;
+    ws.send(JSON.stringify({ capture: true }));
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (Array.isArray(data)) {
+        currentPools = data.filter(p => WHITELIST.has(p.uid));
+        renderPools();
+      }
+    } catch (e) {
+      console.warn('Parse error:', e);
+    }
+  };
+
+  ws.onclose = () => {
+    setStatus('Wiederverbinde...', 'reconnecting');
+    scheduleReconnect();
+  };
+
+  ws.onerror = () => {};
+}
+
+function scheduleReconnect() {
+  if (reconnectTimer) clearTimeout(reconnectTimer);
+  reconnectTimer = setTimeout(() => {
+    backoff = Math.min(backoff * 1.5, 30000);
+    connect();
+  }, backoff);
+}
+
+document.addEventListener('DOMContentLoaded', connect);
+window.addEventListener('beforeunload', () => {
+  if (reconnectTimer) clearTimeout(reconnectTimer);
+  if (ws) try { ws.close(); } catch {}
+});
+</script>
+</body>
+</html>
