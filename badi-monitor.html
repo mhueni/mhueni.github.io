@@ -163,19 +163,24 @@ body {
 }
 .pool-card.expanded .pool-details { display: block; }
 
-.pool-details table {
+table.pool-hours-table {
   width: 100%;
   border-collapse: collapse;
+  border: 0;
+  border-top: 0;
 }
-.pool-details th,
-.pool-details td {
+table.pool-hours-table tbody { border: 0; }
+table.pool-hours-table tr { border: 0; }
+table.pool-hours-table th,
+table.pool-hours-table td {
   padding: 3px 6px;
   text-align: left;
   border-bottom: 1px solid rgba(0,0,0,0.06);
 }
-.pool-details th {
+table.pool-hours-table th {
   font-weight: 600;
   font-size: 0.78rem;
+  border-top: 0;
 }
 
 .empty {
@@ -380,7 +385,7 @@ function renderOpeningHours(uid) {
   const info = POOL_HOURS[uid];
   if (!info) return '';
   const hasWeather = !!info.periods[0].everyWeather;
-  let html = '<table>';
+  let html = '<table class="pool-hours-table">';
   if (hasWeather) {
     html += '<tr><th>Zeitraum</th><th>Jedes Wetter</th><th>Schönwetter</th></tr>';
     for (const p of info.periods) {
