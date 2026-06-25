@@ -30,17 +30,17 @@ h1 {
   font-weight: 700;
   font-size: 2.5rem;
   font-family: 'DM Sans', sans-serif;
+  margin: 2rem 0 1rem 0;
+}
+
+section {
+  margin: 0 0 2rem 0;
 }
 
 header {
   position: relative;
   text-align: center;
   overflow: hidden;
-}
-
-header h1 {
-  position: relative;
-  z-index: 1;
   margin: 0;
 }
 
@@ -59,13 +59,13 @@ a:hover {
 
 .container {
   max-width: 48rem;
-  padding: 2rem;
+  padding: 0 1rem;
   width: 100%;
   margin: 0 auto;
 }
 
 h2 {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   margin: 2rem 0 1rem;
   font-family: 'DM Sans', sans-serif;
@@ -74,7 +74,6 @@ h2 {
 .subtitle {
   font-size: 1rem;
   color: #888;
-  margin: 0;
 }
 
 .skill-list {
@@ -102,12 +101,7 @@ h2 {
 }
 
 .project-list li {
-  padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-}
-
-.project-list li:last-child {
-  border-bottom: none;
+  padding: 0.25rem 0;
 }
 
 .project-list strong {
@@ -118,4 +112,16 @@ hr {
   border: none;
   border-top: 1px solid #fff;
   margin: 2rem 0;
+}
+
+/* Typing effect */
+
+.typing-active::after {
+  content: '|';
+  animation: blink 0.7s step-end infinite;
+  color: #FF8C00;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
 }
