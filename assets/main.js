@@ -1,7 +1,7 @@
 (function () {
   'use strict'
 
-  var SPEED = 25
+  var SPEED = 15
   var targets = document.querySelectorAll('.subtitle')
   if (!targets.length) return
 
