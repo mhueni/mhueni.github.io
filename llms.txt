@@ -1,0 +1,48 @@
+# mhueni.github.io
+
+Personal website of Matthias Hüni, Software Engineer & Maker from Zurich, Switzerland + "Wo go bade in Züri?" pool crowd monitor.
+
+## Key files
+
+- [index.html](index.html) — Landing page
+- [wo-go-bade.html](wo-go-bade.html) — Pool crowd monitor app
+- [assets/main.js](assets/main.js) — Typing animation
+- [assets/main.css](assets/main.css) — Landing page styles
+- [util/bathdata.php](util/bathdata.php) — PHP proxy for city bath data XML
+
+## Tech stack
+
+- Static HTML/CSS/JS frontend
+- PHP backend (single proxy script)
+- WebSocket for real-time crowd data
+- Web app manifest + SVG favicon
+
+## Pool crowd monitor
+
+### Data sources
+- WebSocket `wss://badi-public.crowdmonitor.ch:9591/api` — crowd counts per pool UID
+- Stadt Zürich Open Data Webservice (proxied via PHP) — water temperature + official open/closed; data: https://data.stadt-zuerich.ch/dataset/wassertemperaturen-freibaeder/resource/548d1ceb-1daf-4cf9-a14a-92c86326824d
+- Static POOL_HOURS — hardcoded opening periods per UID
+
+### WHITELIST mapping
+- Object mapping crowd-monitor UID → city POI ID (e.g. `'SSD-10': 'seb6945'`)
+- Card background: green if "offen", red if "geschlossen"
+- Label format when open with city data: `"offen (Wasser {temp}°C, HH:MM Uhr)"`
+- City data only fetched on localhost/127.0.0.1/mhueni.ch/*.mhueni.ch
+
+### Render flow
+1. fetchCityData() → JSON from PHP proxy → Map<poiid, data>
+2. WebSocket message → filter by WHITELIST → attach city data
+3. renderPools() → sort by favorites then name → compute label/color → render cards
+4. 60s interval → re-evaluate isOpen(), update label + color
+
+## index.html conventions
+- `<h2>` for section headings, `<p class="subtitle">` for descriptions
+- `.project-list` `<ul>` for project listings
+- Links open in new tab (`target="_blank"`)
+- Generator meta: `vibe coded with opencode`
+
+## main.js
+- Typing animation for `.subtitle` elements
+- SPEED = 15 ms per character
+- IntersectionObserver: starts typing when scrolled into view
