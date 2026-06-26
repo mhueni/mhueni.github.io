@@ -12,12 +12,6 @@ php -S 0.0.0.0:8080 -t .
 
 Open http://127.0.0.1:8080
 
-## Push to production
-
-```bash
-git push origin master && git push mhueni.ch master
-```
-
 ## Pool monitor data sources
 
 | Source | What |
