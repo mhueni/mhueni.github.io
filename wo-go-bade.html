@@ -587,7 +587,10 @@ function scheduleReconnect() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  fetchCityData();
+  const host = window.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1' || host === 'mhueni.ch' || host.endsWith('.mhueni.ch')) {
+    fetchCityData();
+  }
   connect();
   setInterval(() => {
     document.querySelectorAll('.pool-card').forEach(card => {
