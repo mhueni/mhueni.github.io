@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wo go bade in Züri?</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -199,6 +200,21 @@ table.pool-hours-table th {
     font-size: 1.25rem;
   }
 }
+
+.footer {
+  margin-top: 48px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #8e8ea0;
+}
+.footer a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.footer a:hover {
+  color: #1a1a2e;
+}
 </style>
 </head>
 <body>
@@ -210,6 +226,9 @@ table.pool-hours-table th {
     </div>
   </div>
   <div id="grid" class="grid"></div>
+  <footer class="footer">
+    vibe coded by <a href="index.html">mhueni.ch</a>
+  </footer>
 </div>
 
 <script>
