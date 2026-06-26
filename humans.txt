@@ -1,0 +1,9 @@
+/* TEAM */
+Name: Matthias Hüni
+Site: mhueni.ch
+Location: Zurich, Switzerland
+
+/* SITE */
+Last update: 2026-06-26
+Standards: HTML5, CSS3, ES2024
+Components: PHP 8.5, vanilla JS
