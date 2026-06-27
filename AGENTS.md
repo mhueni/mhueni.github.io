@@ -4,7 +4,8 @@
 
 - Be short and concise
 - Keep asking until every detail is clear and every issue is solved
-- Only commit or push if asked explicitly
+- Only commit / push if asked explicitly
+- Automatically update README.md and llms.txt if necessary
 
 Personal website of Matthias Hüni, Software Engineer & Maker from Zurich, Switzerland + "Wo go bade in Züri?" pool crowd monitor.
 
