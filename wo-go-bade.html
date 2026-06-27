@@ -355,8 +355,8 @@ let cityDataByPoiid = null;
 async function fetchCityData() {
   try {
     const url = REMOTE_API_HOSTS.includes(location.hostname)
-      ? 'https://mhueni.ch/util/bathdata.php'
-      : 'util/bathdata.php';
+      ? 'https://mhueni.ch/util/pooldata.php'
+      : 'util/pooldata.php';
     const res = await fetch(url);
     const data = await res.json();
     const map = new Map();

@@ -8,7 +8,7 @@ Personal website of Matthias Hüni, Software Engineer & Maker from Zurich, Switz
 - [wo-go-bade.html](wo-go-bade.html) — Pool crowd monitor app
 - [assets/main.js](assets/main.js) — Typing animation
 - [assets/main.css](assets/main.css) — Landing page styles
-- [util/bathdata.php](util/bathdata.php) — PHP proxy for city bath data XML
+- [util/pooldata.php](util/pooldata.php) — PHP proxy for city bath data XML
 
 ## Tech stack
 

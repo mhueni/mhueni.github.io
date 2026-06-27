@@ -36,14 +36,14 @@ git push origin master && git push mhueni.ch master
 | `wo-go-bade.html` | Pool crowd monitor (main app) |
 | `assets/main.js` | Typing animation for `.subtitle` elements |
 | `assets/main.css` | Styles for landing page |
-| `util/bathdata.php` | PHP proxy — fetches city XML, returns JSON |
+| `util/pooldata.php` | PHP proxy — fetches city XML, returns JSON |
 
 ## "Wo go bade" Architecture
 
 ### Data Sources
 
 1. **WebSocket** `wss://badi-public.crowdmonitor.ch:9591/api` — real-time crowd counts per pool UID
-2. **Stadt Zürich Open Data Webservice** `https://www.stadt-zuerich.ch/stzh/bathdatadownload` — water temperature + official open/closed status (XML, proxied via `util/bathdata.php`), data: https://data.stadt-zuerich.ch/dataset/wassertemperaturen-freibaeder/resource/548d1ceb-1daf-4cf9-a14a-92c86326824d
+2. **Stadt Zürich Open Data Webservice** `https://www.stadt-zuerich.ch/stzh/bathdatadownload` — water temperature + official open/closed status (XML, proxied via `util/pooldata.php`), data: https://data.stadt-zuerich.ch/dataset/wassertemperaturen-freibaeder/resource/548d1ceb-1daf-4cf9-a14a-92c86326824d
 3. **Static `POOL_HOURS`** — hardcoded opening hours/periods per UID
 
 ### `POOLS`
@@ -74,11 +74,11 @@ const POOLS = {
 - **Color** (card background): grey if closed, green if open (fill ≤ 50%), orange if open (fill > 50%), red if open (fill > 80%)
 - **Label** (when open & city data exists): `"offen (Wasser {temp}°C, HH:MM Uhr)"`
 - **Label** (when open & city says geschlossen): `"geschlossen (HH:MM Uhr)"`
-- **City data** is fetched from `util/bathdata.php` locally, or `https://mhueni.ch/util/bathdata.php` when host is in `REMOTE_API_HOSTS`
+- **City data** is fetched from `util/pooldata.php` locally, or `https://mhueni.ch/util/pooldata.php` when host is in `REMOTE_API_HOSTS`
 
 ### Render Pipeline
 
-1. `fetchCityData()` — fetch JSON from `util/bathdata.php`, build `Map<poiid, data>`
+1. `fetchCityData()` — fetch JSON from `util/pooldata.php`, build `Map<poiid, data>`
 2. `DOMContentLoaded` → initialize `currentPools` from `POOLS` (fill starts at 0), render immediately
 3. WebSocket message → for each pool in data, update `currentfill`/`maxspace` on matching `currentPools` entry
 4. `renderPools()` — sort (favorites first, then alphabetically), compute label + color, render cards

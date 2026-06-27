@@ -17,5 +17,5 @@ Open http://127.0.0.1:8080
 | Source | What |
 |---|---|
 | WebSocket `wss://badi-public.crowdmonitor.ch:9591/api` | Real-time crowd counts |
-| Stadt Zürich Open Data (proxied via `util/bathdata.php`) | Water temperature & official open/closed |
+| Stadt Zürich Open Data (proxied via `util/pooldata.php`) | Water temperature & official open/closed |
 | Static `POOL_HOURS` | Hardcoded opening periods per pool |
