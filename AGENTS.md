@@ -1,5 +1,11 @@
 # mhueni.github.io
 
+## Guidelines
+
+- Be short and concise
+- Keep asking until every detail is clear and every issue is solved
+- Only commit or push if asked explicitly
+
 Personal website of Matthias Hüni, Software Engineer & Maker from Zurich, Switzerland + "Wo go bade in Züri?" pool crowd monitor.
 
 ## Serve
@@ -39,42 +45,43 @@ git push origin master && git push mhueni.ch master
 2. **Stadt Zürich Open Data Webservice** `https://www.stadt-zuerich.ch/stzh/bathdatadownload` — water temperature + official open/closed status (XML, proxied via `util/bathdata.php`), data: https://data.stadt-zuerich.ch/dataset/wassertemperaturen-freibaeder/resource/548d1ceb-1daf-4cf9-a14a-92c86326824d
 3. **Static `POOL_HOURS`** — hardcoded opening hours/periods per UID
 
-### WHITELIST
+### `POOLS`
 
-Object mapping crowd-monitor UID → city POI ID:
+Object mapping crowd-monitor UID → `{ poiid, name }`:
 
 ```js
-const WHITELIST = {
-  'SSD-10':  'seb6945',  // → Seebad Utoquai
-  'SSD-11':  'fb013',    // → Freibad Seebach
-  'LETZI-1': 'fb002',    // → Freibad Letzigraben
-  'flb6939': 'flb6939',  // Flussbad Oberer Letten
-  'flb6940': 'flb6940',  // Flussbad Unterer Letten
-  'flb8803': 'flb8803',  // Flussbad Unterer Letten (2nd sensor)
-  'flb6941': 'flb6941',  // Frauenbad Stadthausquai
-  'fb006':   'fb006',    // Freibad Allenmoos
-  'fb008':   'fb008',    // Freibad Auhof
-  'fb012':   'fb012',    // Freibad Heuried
-  'fb018':   'fb018',    // Freibad Zwischen den Hölzern
-  'seb6946': 'seb6946',  // Strandbad Mythenquai
-  'seb6947': 'seb6947',  // Strandbad Tiefenbrunnen
-  'seb6948': 'seb6948',  // Strandbad Wollishofen
+const POOLS = {
+  'SSD-10':  { poiid: 'seb6945',  name: 'Seebad Utoquai' },
+  'SSD-11':  { poiid: 'fb013',    name: 'Freibad Seebach' },
+  'LETZI-1': { poiid: 'fb002',    name: 'Freibad Letzigraben' },
+  'flb6939': { poiid: 'flb6939', name: 'Flussbad Oberer Letten' },
+  'flb6940': { poiid: 'flb6940', name: 'Flussbad Unterer Letten' },
+  'flb8803': { poiid: 'flb8803', name: 'Flussbad Unterer Letten (2)' },
+  'flb6941': { poiid: 'flb6941', name: 'Frauenbad Stadthausquai' },
+  'fb006':   { poiid: 'fb006',   name: 'Freibad Allenmoos' },
+  'fb008':   { poiid: 'fb008',   name: 'Freibad Auhof' },
+  'fb012':   { poiid: 'fb012',   name: 'Freibad Heuried' },
+  'fb018':   { poiid: 'fb018',   name: 'Freibad Zwischen den Hölzern' },
+  'seb6946': { poiid: 'seb6946', name: 'Strandbad Mythenquai' },
+  'seb6947': { poiid: 'seb6947', name: 'Strandbad Tiefenbrunnen' },
+  'seb6948': { poiid: 'seb6948', name: 'Strandbad Wollishofen' },
 };
 ```
 
 ### Card Display Logic
 
-- **Color** (card background): green if label starts with `offen`, red if starts with `geschlossen`
+- **Color** (card background): grey if closed, green if open (fill ≤ 50%), orange if open (fill > 50%), red if open (fill > 80%)
 - **Label** (when open & city data exists): `"offen (Wasser {temp}°C, HH:MM Uhr)"`
 - **Label** (when open & city says geschlossen): `"geschlossen (HH:MM Uhr)"`
-- **City data** is only fetched on `localhost`, `127.0.0.1`, `mhueni.ch` or `*.mhueni.ch`
+- **City data** is fetched from `util/bathdata.php` locally, or `https://mhueni.ch/util/bathdata.php` when host is in `REMOTE_API_HOSTS`
 
 ### Render Pipeline
 
 1. `fetchCityData()` — fetch JSON from `util/bathdata.php`, build `Map<poiid, data>`
-2. WebSocket message → filter by `Object.hasOwn(WHITELIST, uid)` → attach `_cityData` via `WHITELIST[uid]`
-3. `renderPools()` — sort (favorites first, then alphabetically), compute label + color, render cards
-4. 60-second interval — re-evaluate `isOpen()`, update label + card color
+2. `DOMContentLoaded` → initialize `currentPools` from `POOLS` (fill starts at 0), render immediately
+3. WebSocket message → for each pool in data, update `currentfill`/`maxspace` on matching `currentPools` entry
+4. `renderPools()` — sort (favorites first, then alphabetically), compute label + color, render cards
+5. 60-second interval — re-evaluate `isOpen()`, update label + card color
 
 ## `index.html` Conventions
 

@@ -91,6 +91,7 @@ body {
   outline: 2px solid #95a5a6;
 }
 
+.pool-card.grey  { background: #e0e0e0; }
 .pool-card.green  { background: #d4edda; }
 .pool-card.orange { background: #ffe5b4; }
 .pool-card.red    { background: #f8d7da; }
@@ -232,16 +233,21 @@ table.pool-hours-table th {
 </div>
 
 <script>
-const WHITELIST = {
-  'SSD-10':  'seb6945',
-  'SSD-11':  'fb013',
-  'LETZI-1': 'fb002',
-  'flb6939': 'flb6939', 'flb6940': 'flb6940',
-  'flb8803': 'flb8803', 'flb6941': 'flb6941',
-  'fb006':   'fb006',   'fb008': 'fb008',
-  'fb012':   'fb012',   'fb018': 'fb018',
-  'seb6946': 'seb6946', 'seb6947': 'seb6947',
-  'seb6948': 'seb6948'
+const POOLS = {
+  'SSD-10':  { poiid: 'seb6945',  name: 'Seebad Utoquai' },
+  'SSD-11':  { poiid: 'fb013',    name: 'Freibad Seebach' },
+  'LETZI-1': { poiid: 'fb002',    name: 'Freibad Letzigraben' },
+  'flb6939': { poiid: 'flb6939', name: 'Flussbad Oberer Letten' },
+  'flb6940': { poiid: 'flb6940', name: 'Flussbad Unterer Letten' },
+  'flb8803': { poiid: 'flb8803', name: 'Flussbad Unterer Letten (2)' },
+  'flb6941': { poiid: 'flb6941', name: 'Frauenbad Stadthausquai' },
+  'fb006':   { poiid: 'fb006',   name: 'Freibad Allenmoos' },
+  'fb008':   { poiid: 'fb008',   name: 'Freibad Auhof' },
+  'fb012':   { poiid: 'fb012',   name: 'Freibad Heuried' },
+  'fb018':   { poiid: 'fb018',   name: 'Freibad Zwischen den Hölzern' },
+  'seb6946': { poiid: 'seb6946', name: 'Strandbad Mythenquai' },
+  'seb6947': { poiid: 'seb6947', name: 'Strandbad Tiefenbrunnen' },
+  'seb6948': { poiid: 'seb6948', name: 'Strandbad Wollishofen' },
 };
 
 const POOL_HOURS = {
@@ -338,7 +344,7 @@ const POOL_HOURS = {
 
 const WS_URL = 'wss://badi-public.crowdmonitor.ch:9591/api';
 
-const CITY_DATA_URL = 'util/bathdata.php';
+const REMOTE_API_HOSTS = ['www.sporttrip.ch', 'mhueni.github.io'];
 
 let ws = null;
 let reconnectTimer = null;
@@ -348,13 +354,21 @@ let cityDataByPoiid = null;
 
 async function fetchCityData() {
   try {
-    const res = await fetch(CITY_DATA_URL);
+    const url = REMOTE_API_HOSTS.includes(location.hostname)
+      ? 'https://mhueni.ch/util/bathdata.php'
+      : 'util/bathdata.php';
+    const res = await fetch(url);
     const data = await res.json();
     const map = new Map();
     for (const bath of data.baths) {
       if (bath.poiid) map.set(bath.poiid, bath);
     }
     cityDataByPoiid = map;
+    for (const p of currentPools) {
+      const d = map.get(POOLS[p.uid]?.poiid);
+      if (d) p._cityData = d;
+    }
+    renderPools();
   } catch (err) {
     console.warn('City data fetch failed:', err);
   }
@@ -425,6 +439,23 @@ function isOpen(uid) {
   return { status: 'closed', label: 'Geschlossen' };
 }
 
+function getDisplayLabel(pool, status, label) {
+  if ((status === 'open' || status === 'maybe') && pool?._cityData) {
+    const time = pool._cityData.dateModified?.slice(-5);
+    if (pool._cityData.openClosedTextPlain === 'offen')
+      return `offen (Wasser ${pool._cityData.temperatureWater}°C, ${time} Uhr)`;
+    return `${pool._cityData.openClosedTextPlain} (${time} Uhr)`;
+  }
+  return label;
+}
+
+function getCardColor(displayLabel, hasData, pct) {
+  if (displayLabel.toLowerCase().startsWith('geschlossen')) return 'grey';
+  if (hasData && pct > 80) return 'red';
+  if (hasData && pct > 50) return 'orange';
+  return 'green';
+}
+
 function renderOpeningHours(uid) {
   const info = POOL_HOURS[uid];
   if (!info) return '';
@@ -445,8 +476,7 @@ function renderOpeningHours(uid) {
   return html;
 }
 
-function sortPools(pools) {
-  const favs = getFavorites();
+function sortPools(pools, favs) {
   return [...pools].sort((a, b) => {
     const aF = favs.includes(a.uid);
     const bF = favs.includes(b.uid);
@@ -457,7 +487,8 @@ function sortPools(pools) {
 
 function renderPools() {
   const grid = document.getElementById('grid');
-  const sorted = sortPools(currentPools);
+  const favs = getFavorites();
+  const sorted = sortPools(currentPools, favs);
 
   if (sorted.length === 0) {
     grid.innerHTML = '<div class="empty">Keine Daten verf&uuml;gbar</div>';
@@ -471,24 +502,15 @@ function renderPools() {
 
   let html = '';
   for (const p of sorted) {
-    const fav = isFav(p.uid);
+    const fav = favs.includes(p.uid);
+    const hasData = p.currentfill != null;
     const total = Math.max(p.maxspace, 1);
-    const fill = Math.max(parseInt(p.currentfill) || 0, 0);
+    const fill = hasData ? Math.max(parseInt(p.currentfill) || 0, 0) : 0;
     const pct = Math.min(100, Math.round((fill / total) * 100));
+    const displayFill = hasData ? fill : '?';
     const { status, label } = isOpen(p.uid);
-    let displayLabel = label;
-    if ((status === 'open' || status === 'maybe') && p._cityData) {
-      const time = p._cityData.dateModified?.slice(-5);
-      if (p._cityData.openClosedTextPlain === 'offen') {
-        displayLabel = `offen (Wasser ${p._cityData.temperatureWater}°C, ${time} Uhr)`;
-      } else {
-        displayLabel = `${p._cityData.openClosedTextPlain} (${time} Uhr)`;
-      }
-    }
-
-    let cardColor = 'green';
-    const lowerLabel = displayLabel.toLowerCase();
-    if (lowerLabel.startsWith('geschlossen')) cardColor = 'red';
+    const displayLabel = getDisplayLabel(p, status, label);
+    const cardColor = getCardColor(displayLabel, hasData, pct);
 
     html += `
       <div class="pool-card ${cardColor}${fav ? ' favorite' : ''}${expandedUids.has(p.uid) ? ' expanded' : ''}" data-uid="${p.uid}" style="--fill: ${pct}%">
@@ -500,7 +522,7 @@ function renderPools() {
             <h2>${escHtml(p.name)}</h2>
             <span class="open-status">${displayLabel}</span>
           </div>
-          <span class="visitor-count${lowerLabel.startsWith('geschlossen') ? ' muted' : ''}">${fill}</span>
+          <span class="visitor-count${!hasData || displayLabel.toLowerCase().startsWith('geschlossen') ? ' muted' : ''}">${displayFill}</span>
         </div>
         <div class="pool-details">${renderOpeningHours(p.uid)}</div>
       </div>`;
@@ -523,9 +545,7 @@ function renderPools() {
 }
 
 function escHtml(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 }
 
 function setStatus(text, cls) {
@@ -556,11 +576,13 @@ function connect() {
     try {
       const data = JSON.parse(event.data);
       if (Array.isArray(data)) {
-        currentPools = data.filter(p => Object.hasOwn(WHITELIST, p.uid));
-        for (const p of currentPools) {
-          const poiid = WHITELIST[p.uid];
-          if (poiid && cityDataByPoiid?.has(poiid)) {
-            p._cityData = cityDataByPoiid.get(poiid);
+        for (const p of data) {
+          const poolDef = POOLS[p.uid];
+          if (!poolDef) continue;
+          const existing = currentPools.find(e => e.uid === p.uid);
+          if (existing) {
+            existing.currentfill = p.currentfill;
+            existing.maxspace = p.maxspace;
           }
         }
         renderPools();
@@ -571,7 +593,7 @@ function connect() {
   };
 
   ws.onclose = () => {
-    setStatus('Wiederverbinde...', 'reconnecting');
+    setStatus('Verbinde...', 'reconnecting');
     scheduleReconnect();
   };
 
@@ -587,33 +609,30 @@ function scheduleReconnect() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const host = window.location.hostname;
-  if (host === 'localhost' || host === '127.0.0.1' || host === 'mhueni.ch' || host.endsWith('.mhueni.ch')) {
-    fetchCityData();
-  }
+  currentPools = Object.entries(POOLS).map(([uid, def]) => ({
+    uid, name: def.name, currentfill: null, maxspace: 1
+  }));
+  renderPools();
+  fetchCityData();
   connect();
   setInterval(() => {
     document.querySelectorAll('.pool-card').forEach(card => {
       const uid = card.dataset.uid;
-      const { status, label } = isOpen(uid);
-      let displayLabel = label;
       const poolObj = currentPools.find(p => p.uid === uid);
-      if ((status === 'open' || status === 'maybe') && poolObj?._cityData) {
-        const time = poolObj._cityData.dateModified?.slice(-5);
-        if (poolObj._cityData.openClosedTextPlain === 'offen') {
-          displayLabel = `offen (Wasser ${poolObj._cityData.temperatureWater}°C, ${time} Uhr)`;
-        } else {
-          displayLabel = `${poolObj._cityData.openClosedTextPlain} (${time} Uhr)`;
-        }
-      }
+      const { status, label } = isOpen(uid);
+      const displayLabel = getDisplayLabel(poolObj, status, label);
       const el = card.querySelector('.open-status');
       if (el) {
         el.className = 'open-status';
         el.textContent = displayLabel;
       }
-      const lower = displayLabel.toLowerCase();
-      card.className = card.className.replace(/\b(green|red|orange)\b/g, '') + ' ' +
-        (lower.startsWith('geschlossen') ? 'red' : 'green');
+      const hasData = poolObj?.currentfill != null;
+      const total = Math.max(poolObj?.maxspace ?? 1, 1);
+      const fill = hasData ? Math.max(parseInt(poolObj.currentfill) || 0, 0) : 0;
+      const pct = Math.min(100, Math.round((fill / total) * 100));
+      const visitorEl = card.querySelector('.visitor-count');
+      if (visitorEl) visitorEl.textContent = hasData ? fill : '?';
+      card.className = card.className.replace(/\b(green|red|orange|grey)\b/g, '') + ' ' + getCardColor(displayLabel, hasData, pct);
     });
   }, 60000);
 });
