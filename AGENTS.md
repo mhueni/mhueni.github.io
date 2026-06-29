@@ -6,6 +6,7 @@
 - Keep asking until every detail is clear and every issue is solved
 - Only commit / push if asked explicitly
 - Automatically update README.md, llms.txt, and sitemap.xml if necessary
+- Keep meta tags, structured data, and sitemap.xml in sync when adding/changing pages
 
 Personal website of Matthias Hüni, Software Engineer & Maker from Zurich, Switzerland + "Wo go bade in Züri?" pool crowd monitor.
 
